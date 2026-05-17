@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinTrust Bank</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root[data-theme="dark"] {
+    --bg: #0F172A; --card: #1E293B; --card2: #0F172A;
+    --border: #334155; --text: #F1F5F9; --muted: #94A3B8;
+    --teal: #0EA5E9; --teal-dark: #0284C7; --gold: #F59E0B;
+    --green: #22C55E; --red: #EF4444; --purple: #8B5CF6;
+    --balance-grad: linear-gradient(135deg, #0F3460 0%, #0EA5E9 100%);
+    --topbar-bg: #1E293B; --shadow: none;
+  }
+  :root[data-theme="light"] {
+    --bg: #F0F4F8; --card: #FFFFFF; --card2: #F0F4F8;
+    --border: #D1DBE8; --text: #0F172A; --muted: #64748B;
+    --teal: #0284C7; --teal-dark: #0369A1; --gold: #D97706;
+    --green: #16A34A; --red: #DC2626; --purple: #7C3AED;
+    --balance-grad: linear-gradient(135deg, #0369A1 0%, #38BDF8 100%);
+    --topbar-bg: #FFFFFF; --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.3s, color 0.3s; }
+
+  /* THEME TOGGLE */
+  .theme-toggle { background: var(--card2); border: 1px solid var(--border); border-radius: 20px; padding: 4px; display: flex; gap: 2px; cursor: pointer; }
+  .theme-toggle span { font-size: 15px; padding: 4px 7px; border-radius: 14px; transition: background 0.2s; }
+  .theme-toggle span.active { background: var(--teal); }
+
+  /* AUTH */
+  #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+  .auth-logo { font-size: 48px; margin-bottom: 12px; }
+  .auth-title { font-size: 28px; font-weight: 800; color: var(--teal); margin-bottom: 4px; }
+  .auth-sub { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+  .auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; width: 100%; max-width: 380px; box-shadow: var(--shadow); }
+  .auth-card h2 { font-size: 20px; margin-bottom: 6px; }
+  .auth-card p { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  .auth-theme-row { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+  .inp-group { margin-bottom: 16px; }
+  .inp-group label { display: block; font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+  .inp-group input, .inp-group select { width: 100%; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 15px; outline: none; transition: border 0.2s, background 0.3s; appearance: none; }
+  .inp-group input:focus, .inp-group select:focus { border-color: var(--teal); }
+  .btn { width: 100%; padding: 13px; border-radius: 12px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: linear-gradient(135deg, var(--teal), var(--teal-dark)); color: #fff; }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .demo-hint { text-align: center; margin-top: 16px; font-size: 12px; color: var(--muted); }
+  .demo-hint strong { color: var(--teal); }
+  .err { color: var(--red); font-size: 13px; margin-top: 8px; display: none; }
+
+  /* APP LAYOUT */
+  #app { display: none; max-width: 420px; margin: 0 auto; min-height: 100vh; padding-bottom: 80px; }
+  .topbar { background: var(--topbar-bg); border-bottom: 1px solid var(--border); padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; box-shadow: var(--shadow); }
+  .topbar-left { display: flex; align-items: center; gap: 10px; }
+  .topbar-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--teal), var(--purple)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
+  .topbar-name { font-size: 15px; font-weight: 600; }
+  .topbar-greeting { font-size: 11px; color: var(--muted); }
+  .topbar-right { display: flex; gap: 8px; align-items: center; }
+  .notif-btn { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 7px 10px; cursor: pointer; font-size: 16px; position: relative; }
+  .notif-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: var(--red); border-radius: 50%; }
+  .logout-btn { background: none; border: 1px solid var(--border); border-radius: 10px; padding: 7px 10px; color: var(--muted); font-size: 12px; cursor: pointer; }
+  .logout-btn:hover { color: var(--red); border-color: var(--red); }
+
+  /* SCREENS */
+  .screen { display: none; padding: 18px; }
+  .screen.active { display: block; }
+
+  /* BOTTOM NAV */
+  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; background: var(--topbar-bg); border-top: 1px solid var(--border); display: flex; z-index: 10; box-shadow: var(--shadow); }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 12px; cursor: pointer; border: none; background: none; color: var(--muted); font-size: 10px; font-weight: 600; gap: 4px; transition: color 0.2s; }
+  .nav-item .nav-icon { font-size: 20px; }
+  .nav-item.active { color: var(--teal); }
+
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow); }
+  .section-title { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; margin-top: 4px; }
+
+  /* BALANCE CARD */
+  .balance-card { background: var(--balance-grad); border: none; border-radius: 20px; padding: 24px; margin-bottom: 16px; position: relative; overflow: hidden; }
+  .balance-card::before { content: ''; position: absolute; top: -40px; right: -40px; width: 150px; height: 150px; background: rgba(255,255,255,0.07); border-radius: 50%; }
+  .balance-card::after { content: ''; position: absolute; bottom: -60px; left: -20px; width: 180px; height: 180px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+  .bal-label { font-size: 12px; color: rgba(255,255,255,0.75); margin-bottom: 6px; }
+  .bal-amount { font-size: 36px; font-weight: 800; color: #fff; margin-bottom: 16px; }
+  .bal-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .bal-meta-item { font-size: 12px; color: rgba(255,255,255,0.7); }
+  .bal-meta-item strong { display: block; color: #fff; font-size: 14px; margin-top: 2px; }
+
+  /* QUICK ACTIONS */
+  .quick-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .qa-item { display: flex; flex-direction: column; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 8px; cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow); }
+  .qa-item:hover { border-color: var(--teal); }
+  .qa-icon { font-size: 22px; }
+  .qa-label { font-size: 11px; color: var(--muted); font-weight: 600; text-align: center; }
+
+  /* TRANSACTIONS */
+  .txn-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .txn-item:last-child { border-bottom: none; }
+  .txn-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .txn-info { flex: 1; }
+  .txn-name { font-size: 14px; font-weight: 600; }
+  .txn-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .txn-cashback { font-size: 11px; color: var(--gold); margin-top: 2px; }
+  .txn-amount { font-size: 15px; font-weight: 700; }
+  .txn-amount.debit { color: var(--red); }
+  .txn-amount.credit { color: var(--green); }
+
+  /* CASHBACK */
+  .cashback-hero { background: linear-gradient(135deg, #92400E, #F59E0B); border-radius: 20px; padding: 22px; margin-bottom: 14px; position: relative; overflow: hidden; }
+  .cashback-hero::before { content: '⭐'; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 60px; opacity: 0.2; }
+  .cb-label { font-size: 12px; color: rgba(255,255,255,0.75); margin-bottom: 4px; }
+  .cb-amount { font-size: 32px; font-weight: 800; color: #fff; }
+  .cb-sub { font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 6px; }
+  .cb-rate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .cb-rate { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow); }
+  .cb-rate-icon { font-size: 24px; }
+  .cb-rate-name { font-size: 13px; font-weight: 600; }
+  .cb-rate-pct { font-size: 18px; font-weight: 800; color: var(--gold); }
+  .cb-hist-item { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+  .cb-hist-item:last-child { border-bottom: none; }
+  .cb-hist-icon { width: 36px; height: 36px; border-radius: 10px; background: #F59E0B22; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .cb-hist-name { font-size: 13px; font-weight: 600; }
+  .cb-hist-date { font-size: 11px; color: var(--muted); }
+  .cb-hist-amt { font-size: 14px; font-weight: 700; color: var(--gold); }
+  .redeem-btn { width: 100%; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, var(--gold), #B45309); color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; transition: all 0.2s; margin-bottom: 14px; }
+  .redeem-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .redeem-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* TRANSFER */
+  .amount-preview { background: var(--card2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 16px; text-align: center; }
+  .amount-preview .preview-amt { font-size: 28px; font-weight: 800; }
+  .amount-preview .preview-fee { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .cashback-preview { display: flex; align-items: center; justify-content: space-between; background: #F59E0B11; border: 1px solid #F59E0B44; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; }
+  .cashback-preview span { font-size: 13px; color: var(--gold); font-weight: 600; }
+
+  /* TOAST */
+  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px); background: var(--card); border: 1px solid var(--green); border-radius: 12px; padding: 12px 20px; font-size: 13px; font-weight: 600; color: var(--green); z-index: 999; transition: transform 0.3s; white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 50; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 28px; width: 100%; max-width: 340px; }
+  .modal h3 { font-size: 18px; margin-bottom: 8px; }
+  .modal p { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 20px; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btns button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .modal-cancel { background: var(--card2); color: var(--muted); border: 1px solid var(--border); }
+  .modal-confirm { background: var(--gold); color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-logo">🏦</div>
+  <div class="auth-title">FinTrust Bank</div>
+  <div class="auth-sub">Secure · Smart · Rewarding</div>
+  <div class="auth-card">
+    <div class="auth-theme-row">
+      <div class="theme-toggle" onclick="toggleTheme()">
+        <span id="dark-icon" class="active">🌙</span>
+        <span id="light-icon">☀️</span>
+      </div>
+    </div>
+    <h2>Welcome back</h2>
+    <p>Sign in to access your account</p>
+    <div class="inp-group">
+      <label>Username</label>
+      <input type="text" id="login-user" placeholder="e.g. demo" />
+    </div>
+    <div class="inp-group">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="••••••••" />
+    </div>
+    <div class="err" id="login-err">❌ Invalid credentials. Try demo / demo123</div>
+    <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+    <div class="demo-hint">Demo: username <strong>demo</strong> · password <strong>demo123</strong></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-avatar" id="avatar-initials">DU</div>
+      <div>
+        <div class="topbar-greeting">Good day,</div>
+        <div class="topbar-name" id="topbar-name">Demo User</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="theme-toggle" onclick="toggleTheme()">
+        <span id="dark-icon-app" class="active">🌙</span>
+        <span id="light-icon-app">☀️</span>
+      </div>
+      <button class="notif-btn" onclick="showToast('🔔 No new notifications')">🔔<span class="notif-dot"></span></button>
+      <button class="logout-btn" onclick="doLogout()">Exit</button>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="balance-card">
+      <div class="bal-label">Total Balance</div>
+      <div class="bal-amount" id="bal-display">LKR 485,200.00</div>
+      <div class="bal-meta">
+        <div class="bal-meta-item">Account No.<strong>•••• 4821</strong></div>
+        <div class="bal-meta-item">This Month<strong>LKR 32,450</strong></div>
+        <div class="bal-meta-item">Cashback<strong id="home-cashback" style="color:#FDE68A">LKR 0.00</strong></div>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <div class="qa-item" onclick="switchScreen('transfer')"><div class="qa-icon">💸</div><div class="qa-label">Transfer</div></div>
+      <div class="qa-item" onclick="switchScreen('history')"><div class="qa-icon">📋</div><div class="qa-label">History</div></div>
+      <div class="qa-item" onclick="switchScreen('cashback')"><div class="qa-icon">⭐</div><div class="qa-label">Rewards</div></div>
+      <div class="qa-item" onclick="showToast('📱 QR Pay coming soon!')"><div class="qa-icon">📱</div><div class="qa-label">QR Pay</div></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Recent Transactions</div>
+      <div id="home-txns"></div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="screen" id="screen-history">
+    <div class="section-title" style="margin-bottom:14px">Transaction History</div>
+    <div class="card"><div id="all-txns"></div></div>
+  </div>
+
+  <!-- TRANSFER -->
+  <div class="screen" id="screen-transfer">
+    <div class="section-title" style="margin-bottom:14px">Fund Transfer</div>
+    <div class="card">
+      <div class="inp-group">
+        <label>Recipient Name</label>
+        <input type="text" id="recv-name" placeholder="Enter recipient name" />
+      </div>
+      <div class="inp-group">
+        <label>Account Number</label>
+        <input type="text" id="recv-acc" placeholder="e.g. 0012345678" maxlength="12" />
+      </div>
+      <div class="inp-group">
+        <label>Category</label>
+        <select id="txn-cat" onchange="updateTransferPreview()">
+          <option value="transfer">💸 Personal Transfer</option>
+          <option value="shopping">🛍️ Shopping</option>
+          <option value="food">🍔 Food & Dining</option>
+          <option value="fuel">⛽ Fuel</option>
+          <option value="utilities">💡 Utilities</option>
+        </select>
+      </div>
+      <div class="inp-group">
+        <label>Amount (LKR)</label>
+        <input type="number" id="txn-amount" placeholder="0.00" min="1" oninput="updateTransferPreview()" />
+      </div>
+      <div class="amount-preview">
+        <div class="preview-amt" id="preview-amt">LKR 0.00</div>
+        <div class="preview-fee">Available: <span id="avail-bal">LKR 485,200.00</span></div>
+      </div>
+      <div class="cashback-preview">
+        <span>⭐ Estimated Cashback</span>
+        <span id="preview-cashback">LKR 0.00</span>
+      </div>
+      <button class="btn btn-primary" onclick="initTransfer()">Send Money</button>
+    </div>
+  </div>
+
+  <!-- CASHBACK -->
+  <div class="screen" id="screen-cashback">
+    <div class="cashback-hero">
+      <div class="cb-label">Total Cashback Balance</div>
+      <div class="cb-amount" id="cb-balance-display">LKR 0.00</div>
+      <div class="cb-sub">Earn rewards on every eligible spend</div>
+    </div>
+    <button class="redeem-btn" id="redeem-btn" onclick="showRedeemModal()" disabled>Redeem (Min. LKR 500)</button>
+    <div class="section-title">Cashback Rates</div>
+    <div class="cb-rate-grid">
+      <div class="cb-rate"><div class="cb-rate-icon">🛍️</div><div><div class="cb-rate-name">Shopping</div><div class="cb-rate-pct">3%</div></div></div>
+      <div class="cb-rate"><div class="cb-rate-icon">🍔</div><div><div class="cb-rate-name">Food & Dining</div><div class="cb-rate-pct">2.5%</div></div></div>
+      <div class="cb-rate"><div class="cb-rate-icon">⛽</div><div><div class="cb-rate-name">Fuel</div><div class="cb-rate-pct">2%</div></div></div>
+      <div class="cb-rate"><div class="cb-rate-icon">💡</div><div><div class="cb-rate-name">Utilities</div><div class="cb-rate-pct">1%</div></div></div>
+      <div class="cb-rate"><div class="cb-rate-icon">💸</div><div><div class="cb-rate-name">Transfers</div><div class="cb-rate-pct">0%</div></div></div>
+      <div class="cb-rate" style="border-color:#F59E0B55"><div class="cb-rate-icon">🎁</div><div><div class="cb-rate-name">Min. Redeem</div><div class="cb-rate-pct" style="font-size:14px">LKR 500</div></div></div>
+    </div>
+    <div class="section-title">Rewards History</div>
+    <div class="card"><div id="cb-history"><div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">No cashback yet — make a transaction!</div></div></div>
+  </div>
+</div>
+
+<!-- TRANSFER MODAL -->
+<div class="modal-overlay" id="transfer-modal">
+  <div class="modal">
+    <h3>Confirm Transfer</h3>
+    <p id="modal-text"></p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmTransfer()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- REDEEM MODAL -->
+<div class="modal-overlay" id="redeem-modal">
+  <div class="modal">
+    <h3>⭐ Redeem Cashback</h3>
+    <p id="redeem-modal-text"></p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeRedeemModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmRedeem()">Redeem Now</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bottom-nav" style="display:none">
+  <button class="nav-item active" onclick="switchScreen('home')" id="nav-home"><span class="nav-icon">🏠</span>Home</button>
+  <button class="nav-item" onclick="switchScreen('history')" id="nav-history"><span class="nav-icon">📋</span>History</button>
+  <button class="nav-item" onclick="switchScreen('transfer')" id="nav-transfer"><span class="nav-icon">💸</span>Transfer</button>
+  <button class="nav-item" onclick="switchScreen('cashback')" id="nav-cashback"><span class="nav-icon">⭐</span>Rewards</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── THEME ──
+let currentTheme = 'dark';
+function toggleTheme() {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  const isDark = currentTheme === 'dark';
+  ['dark-icon','dark-icon-app'].forEach(id => { const el = document.getElementById(id); if(el) el.className = isDark ? 'active' : ''; });
+  ['light-icon','light-icon-app'].forEach(id => { const el = document.getElementById(id); if(el) el.className = isDark ? '' : 'active'; });
+}
+
+// ── STATE ──
+let state = {
+  balance: 485200, cashback: 0,
+  transactions: [
+    { id:1, name:"Salary Credit",    cat:"credit",    icon:"💼", date:"May 15, 2026", amount:85000,  type:"credit", cb:0 },
+    { id:2, name:"Supermarket",      cat:"shopping",  icon:"🛍️", date:"May 14, 2026", amount:-4200,  type:"debit",  cb:126 },
+    { id:3, name:"KFC Colombo",      cat:"food",      icon:"🍔", date:"May 13, 2026", amount:-1850,  type:"debit",  cb:46.25 },
+    { id:4, name:"Lanka IOC Fuel",   cat:"fuel",      icon:"⛽", date:"May 12, 2026", amount:-5000,  type:"debit",  cb:100 },
+    { id:5, name:"CEB Bill",         cat:"utilities", icon:"💡", date:"May 11, 2026", amount:-3200,  type:"debit",  cb:32 },
+    { id:6, name:"Softlogic",        cat:"shopping",  icon:"🛍️", date:"May 10, 2026", amount:-12500, type:"debit",  cb:375 },
+  ],
+  cbHistory: [], pending: null
+};
+const RATES = { shopping:0.03, food:0.025, fuel:0.02, utilities:0.01, transfer:0, credit:0 };
+const ICONS = { shopping:"🛍️", food:"🍔", fuel:"⛽", utilities:"💡", transfer:"💸", credit:"💼" };
+state.transactions.forEach(t => { if(t.cb>0){ state.cashback+=t.cb; state.cbHistory.push({name:t.name,date:t.date,earned:t.cb,icon:t.icon}); }});
+
+// ── AUTH ──
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value.trim();
+  const err = document.getElementById('login-err');
+  if ((u==='demo'&&p==='demo123')||(u&&p.length>=4)) {
+    const name = u.charAt(0).toUpperCase()+u.slice(1);
+    document.getElementById('auth-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('bottom-nav').style.display='flex';
+    document.getElementById('topbar-name').textContent=name;
+    document.getElementById('avatar-initials').textContent=name.substring(0,2).toUpperCase();
+    err.style.display='none';
+    renderAll(); showToast('👋 Welcome back, '+name+'!');
+  } else { err.style.display='block'; }
+}
+['login-pass','login-user'].forEach(id => document.getElementById(id).addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); }));
+
+function doLogout() {
+  document.getElementById('app').style.display='none';
+  document.getElementById('bottom-nav').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+}
+
+// ── SCREENS ──
+function switchScreen(name) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  const nav=document.getElementById('nav-'+name); if(nav) nav.classList.add('active');
+  renderAll();
+}
+
+// ── RENDER ──
+function fmt(n) { return 'LKR '+Math.abs(n).toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function renderTxn(t) {
+  return `<div class="txn-item">
+    <div class="txn-icon" style="background:${t.type==='credit'?'#22C55E22':'#EF444422'}">${t.icon||ICONS[t.cat]||'💳'}</div>
+    <div class="txn-info">
+      <div class="txn-name">${t.name}</div>
+      <div class="txn-date">${t.date}</div>
+      ${t.cb>0?`<div class="txn-cashback">⭐ +LKR ${t.cb.toFixed(2)} cashback</div>`:''}
+    </div>
+    <div class="txn-amount ${t.type}">${t.type==='credit'?'+':'-'}${fmt(t.amount)}</div>
+  </div>`;
+}
+
+function renderAll() {
+  document.getElementById('bal-display').textContent=fmt(state.balance);
+  document.getElementById('avail-bal').textContent=fmt(state.balance);
+  document.getElementById('home-cashback').textContent=fmt(state.cashback);
+  document.getElementById('cb-balance-display').textContent=fmt(state.cashback);
+  const rBtn=document.getElementById('redeem-btn');
+  rBtn.disabled=state.cashback<500;
+  rBtn.textContent=state.cashback>=500?`Redeem ${fmt(state.cashback)} as Credit`:'Redeem (Min. LKR 500 required)';
+  document.getElementById('home-txns').innerHTML=[...state.transactions].reverse().slice(0,3).map(renderTxn).join('');
+  document.getElementById('all-txns').innerHTML=[...state.transactions].reverse().map(renderTxn).join('');
+  const cbH=document.getElementById('cb-history');
+  cbH.innerHTML=state.cbHistory.length===0
+    ?'<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">No cashback yet — make a transaction!</div>'
+    :[...state.cbHistory].reverse().map(h=>`<div class="cb-hist-item"><div class="cb-hist-icon">${h.icon}</div><div class="cb-hist-info"><div class="cb-hist-name">${h.name}</div><div class="cb-hist-date">${h.date}</div></div><div class="cb-hist-amt">+LKR ${h.earned.toFixed(2)}</div></div>`).join('');
+}
+
+// ── TRANSFER ──
+function updateTransferPreview() {
+  const amt=parseFloat(document.getElementById('txn-amount').value)||0;
+  const cat=document.getElementById('txn-cat').value;
+  const cb=+(amt*(RATES[cat]||0)).toFixed(2);
+  document.getElementById('preview-amt').textContent=fmt(amt);
+  document.getElementById('preview-cashback').textContent=cb>0?`LKR ${cb.toFixed(2)} (${(RATES[cat]*100)}%)`:'LKR 0.00';
+}
+
+function initTransfer() {
+  const name=document.getElementById('recv-name').value.trim();
+  const acc=document.getElementById('recv-acc').value.trim();
+  const amt=parseFloat(document.getElementById('txn-amount').value);
+  const cat=document.getElementById('txn-cat').value;
+  if(!name){showToast('⚠️ Enter recipient name');return;}
+  if(!acc||acc.length<6){showToast('⚠️ Enter valid account number');return;}
+  if(!amt||amt<=0){showToast('⚠️ Enter a valid amount');return;}
+  if(amt>state.balance){showToast('❌ Insufficient balance');return;}
+  const cb=+(amt*(RATES[cat]||0)).toFixed(2);
+  state.pending={name,acc,amt,cat,cb};
+  const catLabel=document.getElementById('txn-cat').options[document.getElementById('txn-cat').selectedIndex].text;
+  document.getElementById('modal-text').innerHTML=`Send <strong>${fmt(amt)}</strong> to <strong>${name}</strong> (${catLabel})?`+(cb>0?`<br><br>⭐ You'll earn <strong style="color:var(--gold)">LKR ${cb.toFixed(2)}</strong> cashback!`:'');
+  document.getElementById('transfer-modal').classList.add('show');
+}
+
+function closeModal(){document.getElementById('transfer-modal').classList.remove('show');}
+
+function confirmTransfer() {
+  const t=state.pending; if(!t) return; closeModal();
+  state.balance-=t.amt;
+  const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  const newT={id:Date.now(),name:'Transfer to '+t.name,cat:t.cat,icon:ICONS[t.cat]||'💸',date:today,amount:-t.amt,type:'debit',cb:t.cb};
+  state.transactions.push(newT);
+  if(t.cb>0){state.cashback=+(state.cashback+t.cb).toFixed(2);state.cbHistory.push({name:newT.name,date:today,earned:t.cb,icon:newT.icon});showToast(`⭐ Done! +LKR ${t.cb.toFixed(2)} cashback earned`);}
+  else showToast(`✅ LKR ${t.amt.toLocaleString()} sent to ${t.name}`);
+  ['recv-name','recv-acc','txn-amount'].forEach(id=>document.getElementById(id).value='');
+  updateTransferPreview(); state.pending=null; renderAll();
+  setTimeout(()=>switchScreen('home'),500);
+}
+
+// ── REDEEM ──
+function showRedeemModal(){document.getElementById('redeem-modal-text').innerHTML=`Redeem <strong style="color:var(--gold)">${fmt(state.cashback)}</strong> as account credit? It'll be added to your balance instantly.`;document.getElementById('redeem-modal').classList.add('show');}
+function closeRedeemModal(){document.getElementById('redeem-modal').classList.remove('show');}
+function confirmRedeem(){
+  closeRedeemModal();
+  const amt=state.cashback;
+  state.balance=+(state.balance+amt).toFixed(2);
+  const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  state.transactions.push({id:Date.now(),name:'Cashback Redeemed',cat:'credit',icon:'⭐',date:today,amount:amt,type:'credit',cb:0});
+  state.cashback=0; state.cbHistory=[];
+  renderAll(); showToast(`🎉 ${fmt(amt)} credited to your account!`);
+}
+
+// ── TOAST ──
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+</script>
+</body>
+</html>
